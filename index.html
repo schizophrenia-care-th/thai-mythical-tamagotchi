@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thai Mythical Pet Tamagotchi - เลี้ยงสัตว์วิเศษไทย</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Mitr & Kanit for Cute Thai Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Mitr:wght@300;400;500;600&family=Mali:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'thai-gold': '#F59E0B',
+                        'thai-pink': '#F472B6',
+                        'thai-teal': '#14B8A6',
+                        'thai-purple': '#A855F7',
+                        'thai-bg': '#FFF7ED',
+                    },
+                    fontFamily: {
+                        mali: ['Mali', 'cursive', 'sans-serif'],
+                        mitr: ['Mitr', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Mitr', sans-serif;
+            background: linear-gradient(135deg, #FFF1F2 0%, #F0FDFA 50%, #EEF2FF 100%);
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* Custom Bounce & Float Animations */
+        @keyframes floatIdle {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-12px) rotate(2deg); }
+        }
+
+        @keyframes happyBounce {
+            0%, 100% { transform: translateY(0) scale(1); }
+            30% { transform: translateY(-25px) scale(1.1) rotate(-5deg); }
+            60% { transform: translateY(0) scale(0.95); }
+            80% { transform: translateY(-10px) scale(1.05) rotate(5deg); }
+        }
+
+        @keyframes eatShake {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            20% { transform: scale(1.15) rotate(-8deg); }
+            40% { transform: scale(1.05) rotate(8deg); }
+            60% { transform: scale(1.2) rotate(-4deg); }
+            80% { transform: scale(1.1) rotate(4deg); }
+        }
+
+        @keyframes sleepingPulse {
+            0%, 100% { transform: scale(0.96) translateY(4px); opacity: 0.85; }
+            50% { transform: scale(1.02) translateY(-2px); opacity: 1; }
+        }
+
+        @keyframes evolveSparkle {
+            0% { transform: scale(0.5) rotate(0deg); filter: brightness(1); }
+            50% { transform: scale(1.3) rotate(180deg); filter: brightness(2) drop-shadow(0 0 25px #F59E0B); }
+            100% { transform: scale(1) rotate(360deg); filter: brightness(1); }
+        }
+
+        .anim-idle { animation: floatIdle 3.5s ease-in-out infinite; }
+        .anim-happy { animation: happyBounce 0.8s ease-in-out infinite; }
+        .anim-eat { animation: eatShake 0.6s ease-in-out infinite; }
+        .anim-sleep { animation: sleepingPulse 2.5s ease-in-out infinite; }
+        .anim-evolve { animation: evolveSparkle 1.5s ease-in-out; }
+
+        /* Floating particles FX */
+        .particle {
+            position: absolute;
+            pointer-events: none;
+            animation: floatUp 1.2s ease-out forwards;
+        }
+
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0) scale(0.8); }
+            100% { opacity: 0; transform: translateY(-80px) scale(1.4); }
+        }
+
+        /* Glassmorphism Card */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border: 2px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.07), 0 10px 15px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        .btn-action {
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .btn-action:active {
+            transform: scale(0.92);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-2 sm:p-4 text-slate-800">
+
+    <!-- MAIN CONTAINER CONTAINER -->
+    <div id="app" class="w-full max-w-md mx-auto relative">
+
+        <!-- ================= SELECT PET MODAL ================= -->
+        <div id="select-pet-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md hidden">
+            <div class="glass-card rounded-3xl p-6 w-full max-w-sm text-center shadow-2xl border-2 border-amber-200">
+                <h2 class="font-mali text-2xl font-bold text-amber-600 mb-1">✨ เลือกสัตว์วิเศษไทย ✨</h2>
+                <p class="text-xs text-slate-500 mb-5">เลือกคู่หูวิเศษเพื่อเริ่มต้นการเดินทางของคุณ</p>
+
+                <div class="space-y-3 mb-6" id="pet-select-options">
+                    <!-- Option 1: Naga -->
+                    <button onclick="selectPet('naga')" class="w-full bg-emerald-50 hover:bg-emerald-100 border-2 border-emerald-300 rounded-2xl p-3 flex items-center gap-4 transition-all hover:scale-[1.02] text-left">
+                        <div class="w-14 h-14 rounded-xl bg-emerald-200 flex items-center justify-center text-3xl shadow-inner">
+                            🐉
+                        </div>
+                        <div>
+                            <div class="font-bold text-emerald-800 font-mali">พญานาคจิ๋ว (Mini Naga)</div>
+                            <div class="text-xs text-emerald-600">ผู้ปกป้องแห่งสายน้ำ มีพลังเรียกฝนและความอุดมสมบูรณ์</div>
+                        </div>
+                    </button>
+
+                    <!-- Option 2: Machanu -->
+                    <button onclick="selectPet('machanu')" class="w-full bg-sky-50 hover:bg-sky-100 border-2 border-sky-300 rounded-2xl p-3 flex items-center gap-4 transition-all hover:scale-[1.02] text-left">
+                        <div class="w-14 h-14 rounded-xl bg-sky-200 flex items-center justify-center text-3xl shadow-inner">
+                            🐒
+                        </div>
+                        <div>
+                            <div class="font-bold text-sky-800 font-mali">มัจฉานุ (Machanu)</div>
+                            <div class="text-xs text-sky-600">บุตรแห่งหนุมานและนางสุพรรณมัจฉา ซุกซนและว่ายน้ำเก่ง</div>
+                        </div>
+                    </button>
+
+                    <!-- Option 3: Kinnaree -->
+                    <button onclick="selectPet('kinnaree')" class="w-full bg-pink-50 hover:bg-pink-100 border-2 border-pink-300 rounded-2xl p-3 flex items-center gap-4 transition-all hover:scale-[1.02] text-left">
+                        <div class="w-14 h-14 rounded-xl bg-pink-200 flex items-center justify-center text-3xl shadow-inner">
+                            🦚
+                        </div>
+                        <div>
+                            <div class="font-bold text-pink-800 font-mali">กินนรีจิ๋ว (Mini Kinnaree)</div>
+                            <div class="text-xs text-pink-600">อมนุษย์ครึ่งคนครึ่งนกแห่งป่าหิมพานต์ อ่อนหวานและอ่อนช้อย</div>
+                        </div>
+                    </button>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1 text-left">ตั้งชื่อให้สัตว์วิเศษ:</label>
+                    <input type="text" id="custom-pet-name" placeholder="ใส่ชื่อสัตว์เลี้ยงของคุณ..." class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-400 font-mali text-center text-sm">
+                </div>
+
+                <button onclick="confirmPetSelection()" class="w-full py-3 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white font-bold rounded-2xl shadow-lg shadow-orange-300/50 transition-all active:scale-95 font-mali">
+                    เริ่มต้นเลี้ยงสัตว์วิเศษ ✨
+                </button>
+            </div>
+        </div>
+
+        <!-- ================= MAIN GAME CARD ================= -->
+        <div id="main-game" class="glass-card rounded-[2.5rem] p-4 sm:p-6 shadow-2xl relative overflow-hidden border-2 border-white/80">
+            
+            <!-- HEADER INFO BAR -->
+            <div class="flex items-center justify-between bg-white/70 backdrop-blur-md p-3 rounded-2xl shadow-sm mb-4 border border-slate-100">
+                <div class="flex items-center gap-3">
+                    <div id="pet-avatar-mini" class="w-11 h-11 rounded-xl bg-amber-100 border border-amber-300 flex items-center justify-center text-2xl shadow-inner">
+                        🥚
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h1 id="pet-display-name" class="font-mali font-bold text-slate-800 text-base leading-tight">น้องไข่วิเศษ</h1>
+                            <span id="pet-stage-badge" class="px-2 py-0.5 bg-amber-100 text-amber-700 font-bold rounded-full text-[10px]">วัยทารก</span>
+                        </div>
+                        <div class="text-[11px] text-slate-500 flex items-center gap-2 mt-0.5">
+                            <span id="pet-type-name">เผ่าพันธุ์วิเศษ</span>
+                            <span>•</span>
+                            <span>อายุ: <strong id="pet-age">0</strong> วัน</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button onclick="toggleAudio()" id="btn-audio" class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-all text-sm" title="เปิด/ปิด เสียง">
+                        <i class="fa-solid fa-volume-high"></i>
+                    </button>
+                    <button onclick="resetGamePrompt()" class="w-9 h-9 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-500 flex items-center justify-center transition-all text-sm" title="เริ่มใหม่">
+                        <i class="fa-solid fa-rotate-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- PET STAGE & CANVAS DISPLAY AREA -->
+            <div id="pet-display-zone" class="relative w-full h-64 sm:h-72 rounded-3xl bg-gradient-to-b from-sky-100 via-indigo-50/50 to-emerald-100/60 overflow-hidden border border-slate-200/80 shadow-inner flex flex-col items-center justify-between p-4 cursor-pointer" onclick="handlePetClick(event)">
+                
+                <!-- Background Himmapan Theme Elements -->
+                <div class="absolute inset-0 opacity-20 pointer-events-none flex items-center justify-between px-6">
+                    <span class="text-6xl">🌸</span>
+                    <span class="text-6xl">☁️</span>
+                </div>
+                <div id="night-overlay" class="absolute inset-0 bg-slate-950/60 backdrop-blur-[1px] transition-opacity duration-1000 opacity-0 pointer-events-none flex items-center justify-center">
+                    <span class="text-amber-200 text-xs font-mali bg-slate-900/80 px-3 py-1 rounded-full border border-amber-500/30">🌙 เวลาพักผ่อน...</span>
+                </div>
+
+                <!-- Speech Bubble -->
+                <div id="speech-bubble" class="relative z-10 transition-all duration-300 opacity-0 transform translate-y-2 pointer-events-none">
+                    <div class="bg-white/95 backdrop-blur-md border-2 border-amber-300 text-slate-700 font-mali font-semibold text-xs py-1.5 px-4 rounded-2xl shadow-md text-center max-w-[200px] flex items-center justify-center gap-1.5">
+                        <span id="speech-text">สวัสดีเจ้ามนุษย์~</span>
+                    </div>
+                </div>
+
+                <!-- Pet Sprite Container -->
+                <div class="relative flex-1 flex items-center justify-center w-full my-2">
+                    <div id="pet-sprite" class="anim-idle transition-all duration-500 text-7xl sm:text-8xl select-none filter drop-shadow-xl flex items-center justify-center relative">
+                        🥚
+                    </div>
+
+                    <!-- Cleanliness Poop/Dirt Indicators -->
+                    <div id="dirt-layer" class="absolute bottom-2 right-8 text-2xl hidden animate-bounce">
+                        💩
+                    </div>
+                </div>
+
+                <!-- Evolution / Level Progress Bar -->
+                <div class="w-full z-10 bg-white/80 backdrop-blur-md rounded-xl p-2 border border-slate-200 shadow-sm">
+                    <div class="flex justify-between items-center text-[10px] font-bold text-slate-600 mb-1">
+                        <span class="flex items-center gap-1 text-amber-600">
+                            <i class="fa-solid fa-crown text-amber-500"></i> LV.<span id="pet-level">1</span>
+                        </span>
+                        <span id="xp-text" class="text-slate-400">EXP: 0/100</span>
+                    </div>
+                    <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden p-0.5 border border-slate-200">
+                        <div id="xp-bar" class="h-full bg-gradient-to-r from-amber-400 to-amber-500 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PET STATUS BARS GRID -->
+            <div class="grid grid-cols-2 gap-2.5 my-4">
+                <!-- Hunger -->
+                <div class="bg-white/80 p-2.5 rounded-2xl border border-slate-100 shadow-sm">
+                    <div class="flex justify-between text-xs font-bold mb-1 text-rose-600">
+                        <span class="flex items-center gap-1.5">🍙 ความอิ่ม</span>
+                        <span id="stat-hunger-num">80%</span>
+                    </div>
+                    <div class="w-full h-2.5 bg-rose-50 rounded-full overflow-hidden p-0.5 border border-rose-100">
+                        <div id="stat-hunger" class="h-full bg-rose-400 rounded-full transition-all duration-300" style="width: 80%"></div>
+                    </div>
+                </div>
+
+                <!-- Happiness -->
+                <div class="bg-white/80 p-2.5 rounded-2xl border border-slate-100 shadow-sm">
+                    <div class="flex justify-between text-xs font-bold mb-1 text-amber-600">
+                        <span class="flex items-center gap-1.5">💖 ความสุข</span>
+                        <span id="stat-happy-num">80%</span>
+                    </div>
+                    <div class="w-full h-2.5 bg-amber-50 rounded-full overflow-hidden p-0.5 border border-amber-100">
+                        <div id="stat-happy" class="h-full bg-amber-400 rounded-full transition-all duration-300" style="width: 80%"></div>
+                    </div>
+                </div>
+
+                <!-- Energy -->
+                <div class="bg-white/80 p-2.5 rounded-2xl border border-slate-100 shadow-sm">
+                    <div class="flex justify-between text-xs font-bold mb-1 text-indigo-600">
+                        <span class="flex items-center gap-1.5">⚡ พลังวิเศษ</span>
+                        <span id="stat-energy-num">100%</span>
+                    </div>
+                    <div class="w-full h-2.5 bg-indigo-50 rounded-full overflow-hidden p-0.5 border border-indigo-100">
+                        <div id="stat-energy" class="h-full bg-indigo-400 rounded-full transition-all duration-300" style="width: 100%"></div>
+                    </div>
+                </div>
+
+                <!-- Cleanliness -->
+                <div class="bg-white/80 p-2.5 rounded-2xl border border-slate-100 shadow-sm">
+                    <div class="flex justify-between text-xs font-bold mb-1 text-teal-600">
+                        <span class="flex items-center gap-1.5">✨ ความสะอาด</span>
+                        <span id="stat-clean-num">100%</span>
+                    </div>
+                    <div class="w-full h-2.5 bg-teal-50 rounded-full overflow-hidden p-0.5 border border-teal-100">
+                        <div id="stat-clean" class="h-full bg-teal-400 rounded-full transition-all duration-300" style="width: 100%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ACTION BUTTONS GRID -->
+            <div class="grid grid-cols-4 gap-2">
+                <!-- Feed Button -->
+                <button onclick="openActionMenu('feed')" class="btn-action bg-gradient-to-b from-rose-400 to-rose-500 hover:from-rose-500 hover:to-rose-600 text-white p-3 rounded-2xl flex flex-col items-center justify-center shadow-md shadow-rose-200">
+                    <span class="text-xl sm:text-2xl mb-0.5">🥭</span>
+                    <span class="text-[11px] font-bold font-mali">ให้อาหาร</span>
+                </button>
+
+                <!-- Play Button -->
+                <button onclick="openMiniGame()" class="btn-action bg-gradient-to-b from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white p-3 rounded-2xl flex flex-col items-center justify-center shadow-md shadow-amber-200">
+                    <span class="text-xl sm:text-2xl mb-0.5">🎮</span>
+                    <span class="text-[11px] font-bold font-mali">เล่นเกม</span>
+                </button>
+
+                <!-- Clean/Bath Button -->
+                <button onclick="doAction('clean')" class="btn-action bg-gradient-to-b from-teal-400 to-teal-500 hover:from-teal-500 hover:to-teal-600 text-white p-3 rounded-2xl flex flex-col items-center justify-center shadow-md shadow-teal-200">
+                    <span class="text-xl sm:text-2xl mb-0.5">🧼</span>
+                    <span class="text-[11px] font-bold font-mali">สรงน้ำอบ</span>
+                </button>
+
+                <!-- Sleep Button -->
+                <button onclick="toggleSleep()" id="btn-sleep" class="btn-action bg-gradient-to-b from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white p-3 rounded-2xl flex flex-col items-center justify-center shadow-md shadow-indigo-200">
+                    <span class="text-xl sm:text-2xl mb-0.5" id="sleep-btn-icon">🌙</span>
+                    <span class="text-[11px] font-bold font-mali" id="sleep-btn-text">เข้านอน</span>
+                </button>
+            </div>
+
+            <!-- SUB-ACTION POPUP MENU (FOOD CHOICE) -->
+            <div id="food-menu" class="hidden my-3 p-3 bg-rose-50 border border-rose-200 rounded-2xl flex justify-around items-center animate-fade-in">
+                <button onclick="feedPet('makkali')" class="flex flex-col items-center hover:scale-110 transition-transform">
+                    <span class="text-2xl">🍎</span>
+                    <span class="text-[10px] font-bold text-slate-700 mt-0.5">มักกะลีผล (+20)</span>
+                </button>
+                <button onclick="feedPet('khanom')" class="flex flex-col items-center hover:scale-110 transition-transform">
+                    <span class="text-2xl">🍡</span>
+                    <span class="text-[10px] font-bold text-slate-700 mt-0.5">ขนมต้มวิเศษ (+35)</span>
+                </button>
+                <button onclick="feedPet('water')" class="flex flex-col items-center hover:scale-110 transition-transform">
+                    <span class="text-2xl">🍯</span>
+                    <span class="text-[10px] font-bold text-slate-700 mt-0.5">น้ำทิพย์เกษียรสมุทร (+50)</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- ================= MINI GAME MODAL ================= -->
+        <div id="minigame-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md hidden">
+            <div class="glass-card rounded-3xl p-5 w-full max-w-sm text-center shadow-2xl border-2 border-amber-300 relative">
+                <button onclick="closeMiniGame()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+
+                <h3 class="font-mali text-xl font-bold text-amber-600 mb-1">🔮 เก็บแก้วมณีวิเศษ 🔮</h3>
+                <p class="text-xs text-slate-500 mb-3">กดจับแก้วมณีวิเศษวิบวับเพื่อเพิ่มความสุขและ XP!</p>
+
+                <!-- Mini game arena -->
+                <div id="game-arena" class="w-full h-60 bg-gradient-to-b from-indigo-900 via-purple-900 to-slate-900 rounded-2xl relative overflow-hidden my-3 border border-indigo-500/30 flex items-center justify-center cursor-pointer">
+                    <div id="game-start-screen" class="text-center p-4">
+                        <div class="text-4xl mb-2">💎</div>
+                        <button onclick="startMiniGameLoop()" class="px-5 py-2.5 bg-amber-400 hover:bg-amber-500 text-slate-900 font-bold font-mali rounded-xl shadow-lg transition-all">
+                            เริ่มเล่นเกม!
+                        </button>
+                    </div>
+
+                    <!-- Target Gem Item -->
+                    <div id="game-gem" class="hidden absolute text-3xl transition-all duration-300 hover:scale-125 active:scale-95" onclick="catchGem(event)">
+                        💎
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center px-2 text-xs font-bold text-slate-600">
+                    <div>คะแนน: <span id="game-score" class="text-amber-600 text-sm">0</span></div>
+                    <div>เวลาเหลือ: <span id="game-timer" class="text-rose-500 text-sm">15</span> วินาที</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        /* ================= GAME STATE & CONFIGURATION ================= */
+        const PET_CONFIGS = {
+            naga: {
+                name: 'พญานาคจิ๋ว',
+                type: 'เผ่าพันธุ์นาคา',
+                sprites: {
+                    baby: '🥚',
+                    teen: '🐍',
+                    adult: '🐉'
+                },
+                sounds: { pitch: 1.2 }
+            },
+            machanu: {
+                name: 'มัจฉานุ',
+                type: 'เผ่าพันธุ์วานรปักษิน',
+                sprites: {
+                    baby: '🥚',
+                    teen: '🐒',
+                    adult: '🧜‍♂️'
+                },
+                sounds: { pitch: 1.5 }
+            },
+            kinnaree: {
+                name: 'กินนรีจิ๋ว',
+                type: 'เผ่าพันธุ์กินนร',
+                sprites: {
+                    baby: '🥚',
+                    teen: '🐤',
+                    adult: '🦚'
+                },
+                sounds: { pitch: 1.8 }
+            }
+        };
+
+        let gameState = {
+            petType: null,
+            petName: 'น้องวิเศษ',
+            stage: 'baby', // baby, teen, adult
+            level: 1,
+            xp: 0,
+            ageDays: 0,
+            hunger: 80,
+            happiness: 80,
+            energy: 100,
+            cleanliness: 100,
+            isSleeping: false,
+            audioEnabled: true,
+            lastTick: Date.now()
+        };
+
+        let gameTimerInterval = null;
+        let miniGameTimer = null;
+        let miniGameScore = 0;
+        let miniGameTimeLeft = 15;
+
+        // Web Audio Synth for cute sound effects
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSound(type) {
+            if (!gameState.audioEnabled) return;
+            initAudio();
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            const now = audioCtx.currentTime;
+
+            if (type === 'happy' || type === 'feed') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, now);
+                osc.frequency.exponentialRampToValueAtTime(800, now + 0.15);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                osc.start(now);
+                osc.stop(now + 0.15);
+            } else if (type === 'clean') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(600, now);
+                osc.frequency.linearRampToValueAtTime(300, now + 0.2);
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                osc.start(now);
+                osc.stop(now + 0.2);
+            } else if (type === 'click') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(600, now);
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+                osc.start(now);
+                osc.stop(now + 0.05);
+            } else if (type === 'evolve') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(300, now);
+                osc.frequency.exponentialRampToValueAtTime(900, now + 0.4);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+                osc.start(now);
+                osc.stop(now + 0.5);
+            }
+        }
+
+        /* ================= INITIALIZATION & SAVE SYSTEM ================= */
+        window.onload = function() {
+            loadGame();
+            startGameLoop();
+        };
+
+        function saveGame() {
+            gameState.lastTick = Date.now();
+            localStorage.setItem('thai_tamagotchi_save', JSON.stringify(gameState));
+        }
+
+        function loadGame() {
+            const saved = localStorage.getItem('thai_tamagotchi_save');
+            if (saved) {
+                try {
+                    gameState = { ...gameState, ...JSON.parse(saved) };
+                    // Calculate offline time decay
+                    const now = Date.now();
+                    const diffMinutes = Math.floor((now - gameState.lastTick) / (1000 * 60));
+                    if (diffMinutes > 0 && !gameState.isSleeping) {
+                        gameState.hunger = Math.max(0, gameState.hunger - diffMinutes * 2);
+                        gameState.happiness = Math.max(0, gameState.happiness - diffMinutes * 1.5);
+                        gameState.cleanliness = Math.max(0, gameState.cleanliness - diffMinutes * 1);
+                    }
+                    updateUI();
+                } catch(e) {
+                    showPetSelectModal();
+                }
+            } else {
+                showPetSelectModal();
+            }
+        }
+
+        function showPetSelectModal() {
+            document.getElementById('select-pet-modal').classList.remove('hidden');
+        }
+
+        let selectedPetType = 'naga';
+        function selectPet(type) {
+            selectedPetType = type;
+            playSound('click');
+        }
+
+        function confirmPetSelection() {
+            const customName = document.getElementById('custom-pet-name').value.trim();
+            gameState.petType = selectedPetType;
+            gameState.petName = customName || PET_CONFIGS[selectedPetType].name;
+            gameState.stage = 'baby';
+            gameState.level = 1;
+            gameState.xp = 0;
+            gameState.ageDays = 0;
+            gameState.hunger = 90;
+            gameState.happiness = 90;
+            gameState.energy = 100;
+            gameState.cleanliness = 100;
+            gameState.isSleeping = false;
+
+            document.getElementById('select-pet-modal').classList.add('hidden');
+            saveGame();
+            updateUI();
+            showSpeechBubble('ยินดีที่ได้พบกันนะเจ้ามนุษย์! ✨');
+            playSound('evolve');
+        }
+
+        function resetGamePrompt() {
+            if (confirm('คุณต้องการเริ่มต้นเลี้ยงสัตว์วิเศษตัวใหม่หรือไม่?')) {
+                localStorage.removeItem('thai_tamagotchi_save');
+                showPetSelectModal();
+            }
+        }
+
+        /* ================= GAME LOOP & DECAY ================= */
+        function startGameLoop() {
+            if (gameTimerInterval) clearInterval(gameTimerInterval);
+            gameTimerInterval = setInterval(() => {
+                if (!gameState.petType) return;
+
+                // Decay stats if not sleeping
+                if (!gameState.isSleeping) {
+                    gameState.hunger = Math.max(0, gameState.hunger - 1);
+                    gameState.happiness = Math.max(0, gameState.happiness - 0.8);
+                    gameState.cleanliness = Math.max(0, gameState.cleanliness - 0.5);
+                    gameState.energy = Math.max(0, gameState.energy - 0.5);
+                } else {
+                    // Recover energy while sleeping
+                    gameState.energy = Math.min(100, gameState.energy + 4);
+                    gameState.hunger = Math.max(0, gameState.hunger - 0.3);
+                    if (gameState.energy >= 100) {
+                        toggleSleep(false); // Auto wake up when full energy
+                        showSpeechBubble('ตื่นแล้วสดชื่นมากเลย! ☀️');
+                    }
+                }
+
+                // Aging increment gradually
+                gameState.ageDays += 0.01;
+
+                updateUI();
+                saveGame();
+            }, 3000); // Ticks every 3 seconds
+        }
+
+        /* ================= UI UPDATER ================= */
+        function updateUI() {
+            if (!gameState.petType) return;
+
+            const config = PET_CONFIGS[gameState.petType];
+            
+            // Header info
+            document.getElementById('pet-display-name').innerText = gameState.petName;
+            document.getElementById('pet-type-name').innerText = config.type;
+            document.getElementById('pet-age').innerText = Math.floor(gameState.ageDays);
+            
+            // Avatar & Sprite
+            const spriteSymbol = config.sprites[gameState.stage];
+            document.getElementById('pet-sprite').innerText = spriteSymbol;
+            document.getElementById('pet-avatar-mini').innerText = spriteSymbol;
+
+            // Stage Badge
+            const stageBadges = {
+                baby: 'วัยฟักไข่ / ทารก',
+                teen: 'วัยรุ่นวิเศษ',
+                adult: 'ร่างเทพสมบูรณ์'
+            };
+            document.getElementById('pet-stage-badge').innerText = stageBadges[gameState.stage];
+
+            // XP and Level Bar
+            const xpMax = gameState.level * 100;
+            const xpPercent = Math.min(100, Math.floor((gameState.xp / xpMax) * 100));
+            document.getElementById('pet-level').innerText = gameState.level;
+            document.getElementById('xp-text').innerText = `EXP: ${Math.floor(gameState.xp)}/${xpMax}`;
+            document.getElementById('xp-bar').style.width = `${xpPercent}%`;
+
+            // Status Bars
+            updateBar('stat-hunger', gameState.hunger);
+            updateBar('stat-happy', gameState.happiness);
+            updateBar('stat-energy', gameState.energy);
+            updateBar('stat-clean', gameState.cleanliness);
+
+            // Cleanliness poop indicator
+            const dirtLayer = document.getElementById('dirt-layer');
+            if (gameState.cleanliness < 40) {
+                dirtLayer.classList.remove('hidden');
+            } else {
+                dirtLayer.classList.add('hidden');
+            }
+
+            // Sprite Animations & Sleeping Overlay
+            const spriteEl = document.getElementById('pet-sprite');
+            const nightOverlay = document.getElementById('night-overlay');
+
+            if (gameState.isSleeping) {
+                spriteEl.className = 'anim-sleep transition-all duration-500 text-7xl sm:text-8xl select-none filter drop-shadow-xl flex items-center justify-center relative';
+                nightOverlay.classList.remove('opacity-0');
+                nightOverlay.classList.add('opacity-100');
+            } else {
+                nightOverlay.classList.remove('opacity-100');
+                nightOverlay.classList.add('opacity-0');
+                if (!spriteEl.classList.contains('anim-happy') && !spriteEl.classList.contains('anim-eat')) {
+                    spriteEl.className = 'anim-idle transition-all duration-500 text-7xl sm:text-8xl select-none filter drop-shadow-xl flex items-center justify-center relative';
+                }
+            }
+        }
+
+        function updateBar(id, value) {
+            const valRounded = Math.round(value);
+            document.getElementById(id).style.width = `${valRounded}%`;
+            document.getElementById(`${id}-num`).innerText = `${valRounded}%`;
+        }
+
+        /* ================= INTERACTIONS & ACTIONS ================= */
+        function openActionMenu(menu) {
+            playSound('click');
+            const foodMenu = document.getElementById('food-menu');
+            if (menu === 'feed') {
+                foodMenu.classList.toggle('hidden');
+            }
+        }
+
+        function feedPet(foodType) {
+            if (gameState.isSleeping) {
+                showSpeechBubble('กำลังหลับอยู่... งิ้ว~');
+                return;
+            }
+
+            document.getElementById('food-menu').classList.add('hidden');
+
+            let gainHunger = 0;
+            let foodName = '';
+
+            if (foodType === 'makkali') {
+                gainHunger = 20;
+                foodName = 'มักกะลีผล';
+            } else if (foodType === 'khanom') {
+                gainHunger = 35;
+                foodName = 'ขนมต้มวิเศษ';
+            } else if (foodType === 'water') {
+                gainHunger = 50;
+                foodName = 'น้ำทิพย์เกษียรสมุทร';
+            }
+
+            gameState.hunger = Math.min(100, gameState.hunger + gainHunger);
+            addXP(15);
+
+            triggerPetAnimation('anim-eat', 1200);
+            createFloatingParticle('🍎');
+            playSound('feed');
+            showSpeechBubble(`ทาน ${foodName} อร่อยจังเลย! 😋`);
+            updateUI();
+        }
+
+        function doAction(action) {
+            playSound('click');
+            if (gameState.isSleeping) {
+                showSpeechBubble('กำลังนอนหลับสบายอยู่เลย... 💤');
+                return;
+            }
+
+            if (action === 'clean') {
+                gameState.cleanliness = 100;
+                addXP(10);
+                triggerPetAnimation('anim-happy', 1000);
+                createFloatingParticle('🧼');
+                playSound('clean');
+                showSpeechBubble('ชำระล้างด้วยน้ำอบไทย หอมสดชื่น! ✨');
+            }
+            updateUI();
+        }
+
+        function toggleSleep(forceState) {
+            playSound('click');
+            if (forceState !== undefined) {
+                gameState.isSleeping = forceState;
+            } else {
+                gameState.isSleeping = !gameState.isSleeping;
+            }
+
+            const sleepBtnIcon = document.getElementById('sleep-btn-icon');
+            const sleepBtnText = document.getElementById('sleep-btn-text');
+
+            if (gameState.isSleeping) {
+                sleepBtnIcon.innerText = '☀️';
+                sleepBtnText.innerText = 'ตื่นนอน';
+                showSpeechBubble('ฝันดีนะเจ้ามนุษย์... 💤');
+            } else {
+                sleepBtnIcon.innerText = '🌙';
+                sleepBtnText.innerText = 'เข้านอน';
+                showSpeechBubble('อรุณสวัสดิ์! พร้อมลุยแล้ว ✨');
+            }
+            updateUI();
+        }
+
+        function handlePetClick(event) {
+            if (gameState.isSleeping) return;
+
+            gameState.happiness = Math.min(100, gameState.happiness + 5);
+            addXP(5);
+
+            triggerPetAnimation('anim-happy', 800);
+            createFloatingParticle('💖', event.clientX, event.clientY);
+            playSound('happy');
+
+            const happyQuotes = [
+                'รักเจ้ามนุษย์ที่สุดเลย! 🥰',
+                'จี้เอวเค้าเหรอ อิอิ~ 💕',
+                'มีความสุขจังเลย! ✨',
+                'ลูบหัวอีกสิ ชอบจัง~ 🌸'
+            ];
+            const randomQuote = happyQuotes[Math.floor(Math.random() * happyQuotes.length)];
+            showSpeechBubble(randomQuote);
+
+            updateUI();
+        }
+
+        /* ================= XP & EVOLUTION SYSTEM ================= */
+        function addXP(amount) {
+            gameState.xp += amount;
+            const xpNeeded = gameState.level * 100;
+
+            if (gameState.xp >= xpNeeded) {
+                gameState.xp -= xpNeeded;
+                gameState.level += 1;
+
+                // Evolution logic based on level thresholds
+                if (gameState.level >= 3 && gameState.stage === 'baby') {
+                    evolvePet('teen');
+                } else if (gameState.level >= 7 && gameState.stage === 'teen') {
+                    evolvePet('adult');
+                } else {
+                    playSound('evolve');
+                    showSpeechBubble(`เลเวลอัปแล้ว! ตอนนี้ LV.${gameState.level} 🎉`);
+                }
+            }
+        }
+
+        function evolvePet(newStage) {
+            gameState.stage = newStage;
+            triggerPetAnimation('anim-evolve', 1500);
+            playSound('evolve');
+
+            const stageNames = {
+                teen: 'วัยรุ่นวิเศษ',
+                adult: 'ร่างเทพสมบูรณ์'
+            };
+
+            showSpeechBubble(`✨ เติบโตขึ้นเป็น "${stageNames[newStage]}" แล้ว! 🎉`);
+            createFloatingParticle('🌟');
+            createFloatingParticle('✨');
+            saveGame();
+        }
+
+        /* ================= MINI GAME MECHANICS ================= */
+        function openMiniGame() {
+            playSound('click');
+            if (gameState.isSleeping) {
+                showSpeechBubble('ง่วงนอนอยู่ เล่นไม่ไหวหรอก... 💤');
+                return;
+            }
+            if (gameState.energy < 15) {
+                showSpeechBubble('พลังงานไม่พอ! ไปนอนพักก่อนนะ ⚡');
+                return;
+            }
+
+            document.getElementById('minigame-modal').classList.remove('hidden');
+            document.getElementById('game-start-screen').classList.remove('hidden');
+            document.getElementById('game-gem').classList.add('hidden');
+        }
+
+        function closeMiniGame() {
+            playSound('click');
+            document.getElementById('minigame-modal').classList.add('hidden');
+            if (miniGameTimer) clearInterval(miniGameTimer);
+        }
+
+        function startMiniGameLoop() {
+            playSound('click');
+            gameState.energy = Math.max(0, gameState.energy - 15);
+            miniGameScore = 0;
+            miniGameTimeLeft = 15;
+
+            document.getElementById('game-score').innerText = miniGameScore;
+            document.getElementById('game-timer').innerText = miniGameTimeLeft;
+            document.getElementById('game-start-screen').classList.add('hidden');
+            document.getElementById('game-gem').classList.remove('hidden');
+
+            moveGem();
+
+            if (miniGameTimer) clearInterval(miniGameTimer);
+            miniGameTimer = setInterval(() => {
+                miniGameTimeLeft--;
+                document.getElementById('game-timer').innerText = miniGameTimeLeft;
+
+                if (miniGameTimeLeft <= 0) {
+                    clearInterval(miniGameTimer);
+                    endMiniGame();
+                } else {
+                    moveGem();
+                }
+            }, 1000);
+        }
+
+        function moveGem() {
+            const arena = document.getElementById('game-arena');
+            const gem = document.getElementById('game-gem');
+
+            const maxX = arena.clientWidth - 50;
+            const maxY = arena.clientHeight - 50;
+
+            const randomX = Math.floor(Math.random() * maxX);
+            const randomY = Math.floor(Math.random() * maxY);
+
+            gem.style.left = `${randomX}px`;
+            gem.style.top = `${randomY}px`;
+        }
+
+        function catchGem(e) {
+            e.stopPropagation();
+            miniGameScore += 10;
+            document.getElementById('game-score').innerText = miniGameScore;
+            playSound('happy');
+            moveGem();
+        }
+
+        function endMiniGame() {
+            document.getElementById('game-gem').classList.add('hidden');
+            document.getElementById('game-start-screen').classList.remove('hidden');
+
+            const xpEarned = Math.floor(miniGameScore / 2);
+            const happyEarned = Math.min(30, Math.floor(miniGameScore / 3));
+
+            gameState.happiness = Math.min(100, gameState.happiness + happyEarned);
+            addXP(xpEarned);
+
+            showSpeechBubble(`เล่นจบแล้ว! ได้รับ EXP +${xpEarned} และความสุข +${happyEarned} 🎮`);
+            updateUI();
+            closeMiniGame();
+        }
+
+        /* ================= VISUAL HELPERS & AUDIO TOGGLE ================= */
+        function showSpeechBubble(text) {
+            const bubble = document.getElementById('speech-bubble');
+            const speechText = document.getElementById('speech-text');
+
+            speechText.innerText = text;
+            bubble.classList.remove('opacity-0', 'translate-y-2');
+            bubble.classList.add('opacity-100', 'translate-y-0');
+
+            setTimeout(() => {
+                bubble.classList.remove('opacity-100', 'translate-y-0');
+                bubble.classList.add('opacity-0', 'translate-y-2');
+            }, 3000);
+        }
+
+        function triggerPetAnimation(className, durationMs) {
+            const sprite = document.getElementById('pet-sprite');
+            sprite.className = `${className} transition-all duration-500 text-7xl sm:text-8xl select-none filter drop-shadow-xl flex items-center justify-center relative`;
+
+            setTimeout(() => {
+                updateUI();
+            }, durationMs);
+        }
+
+        function createFloatingParticle(emoji, clientX, clientY) {
+            const container = document.getElementById('pet-display-zone');
+            const particle = document.createElement('div');
+            particle.className = 'particle text-3xl z-30';
+            particle.innerText = emoji;
+
+            if (clientX && clientY) {
+                const rect = container.getBoundingClientRect();
+                particle.style.left = `${clientX - rect.left - 15}px`;
+                particle.style.top = `${clientY - rect.top - 15}px`;
+            } else {
+                particle.style.left = `${Math.random() * 60 + 20}%`;
+                particle.style.top = `50%`;
+            }
+
+            container.appendChild(particle);
+
+            setTimeout(() => {
+                particle.remove();
+            }, 1200);
+        }
+
+        function toggleAudio() {
+            gameState.audioEnabled = !gameState.audioEnabled;
+            const btn = document.getElementById('btn-audio');
+            if (gameState.audioEnabled) {
+                btn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
+                btn.className = 'w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-all text-sm';
+            } else {
+                btn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
+                btn.className = 'w-9 h-9 rounded-xl bg-rose-100 hover:bg-rose-200 text-rose-600 flex items-center justify-center transition-all text-sm';
+            }
+        }
+    </script>
+</body>
+</html>
